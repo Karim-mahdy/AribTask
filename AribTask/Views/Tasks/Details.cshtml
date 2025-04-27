@@ -1,0 +1,59 @@
+@model AribTask.Application.ViewModels.EmployeeTaskViewModel
+
+<div class="modal fade" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Task Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <dl class="row">
+                    <dt class="col-sm-3">Title</dt>
+                    <dd class="col-sm-9">@Model.Title</dd>
+                    
+                    <dt class="col-sm-3">Description</dt>
+                    <dd class="col-sm-9">@Model.Description</dd>
+                    
+                    <dt class="col-sm-3">Due Date</dt>
+                    <dd class="col-sm-9">@Model.DueDate.ToString("yyyy-MM-dd")</dd>
+                    
+                    <dt class="col-sm-3">Status</dt>
+                    <dd class="col-sm-9">
+                        <span class="badge @GetStatusBadgeClass(Model.Status)">
+                            @Model.Status
+                        </span>
+                    </dd>
+                    
+                    <dt class="col-sm-3">Assigned To</dt>
+                    <dd class="col-sm-9">@Model.EmployeeName</dd>
+                    
+                    <dt class="col-sm-3">Created By</dt>
+                    <dd class="col-sm-9">@Model.CreatedByName</dd>
+                </dl>
+            </div>
+            <div class="modal-footer">
+                @if (Model.Status != AribTask.Domain.Models.TaskStatus.Completed)
+                {
+                    <button type="button" class="btn btn-primary edit-task" data-id="@Model.Id">Update Status</button>
+                }
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@functions {
+    public string GetStatusBadgeClass(AribTask.Domain.Models.TaskStatus status)
+    {
+        return status switch
+        {
+            AribTask.Domain.Models.TaskStatus.New => "bg-primary",
+            AribTask.Domain.Models.TaskStatus.InProgress => "bg-info",
+            AribTask.Domain.Models.TaskStatus.Completed => "bg-success",
+            AribTask.Domain.Models.TaskStatus.Delayed => "bg-warning",
+            AribTask.Domain.Models.TaskStatus.Cancelled => "bg-secondary",
+            _ => "bg-secondary"
+        };
+    }
+}

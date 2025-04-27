@@ -1,0 +1,52 @@
+@model AribTask.Application.ViewModels.EmployeeTaskViewModel
+
+<div class="modal fade" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Task Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row mb-3">
+                    <div class="col-md-12">
+                        <h4>@Model.Title</h4>
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-md-3 fw-bold">Description:</div>
+                    <div class="col-md-9">@Model.Description</div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-md-3 fw-bold">Status:</div>
+                    <div class="col-md-9">
+                        <span class="badge @(Model.Status switch {
+                            AribTask.Domain.Models.TaskStatus.New => "bg-primary",
+                            AribTask.Domain.Models.TaskStatus.InProgress => "bg-info",
+                            AribTask.Domain.Models.TaskStatus.Completed => "bg-success",
+                            AribTask.Domain.Models.TaskStatus.Delayed => "bg-warning",
+                            AribTask.Domain.Models.TaskStatus.Cancelled => "bg-secondary",
+                            _ => "bg-secondary"
+                        })">@Model.Status</span>
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-md-3 fw-bold">Due Date:</div>
+                    <div class="col-md-9">@Model.DueDate.ToString("yyyy-MM-dd")</div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-md-3 fw-bold">Assigned To:</div>
+                    <div class="col-md-9">@(Model.EmployeeName ?? "Not Assigned")</div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-md-3 fw-bold">Created By:</div>
+                    <div class="col-md-9">@Model.CreatedByName</div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-primary">Edit</a>
+            </div>
+        </div>
+    </div>
+</div> 

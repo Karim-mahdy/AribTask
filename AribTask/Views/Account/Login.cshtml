@@ -1,0 +1,59 @@
+@{
+    ViewData["Title"] = "Login";
+    Layout = "_Layout";
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-4">
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h2 class="mb-0">@ViewData["Title"]</h2>
+            </div>
+            <div class="card-body">
+                <form method="post" asp-controller="Account" asp-action="Login" asp-route-returnurl="@ViewData["ReturnUrl"]">
+                    <div asp-validation-summary="All" class="text-danger"></div>
+                    <div class="form-group mb-3">
+                        <label for="userName">Username</label>
+                        <input id="userName" name="userName" class="form-control" placeholder="Enter your username" />
+                    </div>
+                    <div class="form-group mb-3">
+                        <label for="password">Password</label>
+                        <input id="password" name="password" type="password" class="form-control" placeholder="Enter your password" />
+                    </div>
+                    <div class="form-group mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="rememberMe" id="rememberMe" />
+                            <label class="form-check-label" for="rememberMe">Remember me</label>
+                        </div>
+                    </div>
+                    <div class="form-group mb-3">
+                        <button type="submit" class="btn btn-primary w-100">Log in</button>
+                    </div>
+                    <div class="form-group text-center">
+                        <p>Don't have an account? <a asp-action="Register">Register</a></p>
+                    </div>
+                </form>
+                <div class="mt-4 p-3 bg-light rounded">
+                    <p class="mb-2 fw-bold">Demo Users:</p>
+                    <ul class="list-unstyled">
+                    <li><span class="fw-bold">Admin:</span> admin / Admin@123</li>
+                    <li><span class="fw-bold">Manager:</span> manager / Manager@123</li>
+                    <li><span class="fw-bold">Employee 1:</span> employee1 / Employee@123</li>
+                    <li><span class="fw-bold">Employee 2:</span> employee2 / Employee@123</li>
+                    </ul>
+                    <a href="@Url.Action("SeedUsers", "Account")" class="btn btn-outline-secondary btn-sm">Initialize Demo Users</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        $(document).ready(function() {
+            // Focus on username field when page loads
+            $("#userName").focus();
+        });
+    </script>
+}

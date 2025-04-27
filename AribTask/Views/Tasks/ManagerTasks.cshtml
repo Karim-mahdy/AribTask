@@ -1,0 +1,105 @@
+@model IEnumerable<AribTask.Domain.Models.EmployeeTask>
+
+@{
+    ViewData["Title"] = "Tasks I've Assigned";
+}
+
+<h1>Tasks I've Assigned</h1>
+
+<p>
+    <a asp-action="Create" class="btn btn-primary">Assign New Task</a>
+</p>
+
+<div class="card">
+    <div class="card-body">
+        @if (!Model.Any())
+        {
+            <div class="alert alert-info">
+                You haven't assigned any tasks yet.
+            </div>
+        }
+        else
+        {
+            <table class="table table-striped" id="managerTasksTable">
+                <thead>
+                    <tr>
+                        <th>Title</th>
+                        <th>Description</th>
+                        <th>Due Date</th>
+                        <th>Status</th>
+                        <th>Assigned To</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model)
+                    {
+                        <tr class="@GetRowClass(item.Status, item.DueDate)">
+                            <td>@Html.DisplayFor(modelItem => item.Title)</td>
+                            <td>@Html.DisplayFor(modelItem => item.Description)</td>
+                            <td>@item.DueDate.ToString("yyyy-MM-dd")</td>
+                            <td>
+                                <span class="badge @GetStatusBadgeClass(item.Status)">
+                                    @item.Status
+                                </span>
+                            </td>
+                            <td>@item.Employee?.FullName</td>
+                            <td>
+                                <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-outline-info">Details</a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+    </div>
+</div>
+
+<form id="assignTaskForm">
+    @Html.AntiForgeryToken()
+    <!-- form fields -->
+</form>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            // Initialize DataTable
+            $('#managerTasksTable').DataTable({
+                "paging": true,
+                "ordering": true,
+                "info": true,
+                "searching": true,
+                "lengthChange": true
+            });
+        });
+    </script>
+}
+
+@functions {
+    public string GetStatusBadgeClass(AribTask.Domain.Models.TaskStatus status)
+    {
+        return status switch
+        {
+            AribTask.Domain.Models.TaskStatus.New => "bg-primary",
+            AribTask.Domain.Models.TaskStatus.InProgress => "bg-info",
+            AribTask.Domain.Models.TaskStatus.Completed => "bg-success",
+            AribTask.Domain.Models.TaskStatus.Delayed => "bg-warning",
+            AribTask.Domain.Models.TaskStatus.Cancelled => "bg-secondary",
+            _ => "bg-secondary"
+        };
+    }
+
+    public string GetRowClass(AribTask.Domain.Models.TaskStatus status, DateTime dueDate)
+    {
+        if (status == AribTask.Domain.Models.TaskStatus.Completed)
+            return "";
+            
+        if (dueDate.Date < DateTime.Today && status != AribTask.Domain.Models.TaskStatus.Completed)
+            return "table-danger";
+            
+        if (dueDate.Date == DateTime.Today && status != AribTask.Domain.Models.TaskStatus.Completed)
+            return "table-warning";
+            
+        return "";
+    }
+} 

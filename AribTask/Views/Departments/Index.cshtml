@@ -1,0 +1,147 @@
+@model IEnumerable<AribTask.Application.ViewModels.DepartmentViewModel>
+
+@{
+    ViewData["Title"] = "Departments";
+}
+
+<h1>Departments</h1>
+
+<p>
+    <a href="javascript:;" class="btn btn-primary btn-create">Create New</a>
+
+</p>
+<div id="modal-placeholder"></div>
+
+<div class="card">
+    <div class="card-header">
+        <form asp-action="Index" method="get" class="row g-3">
+            <div class="col-md-6">
+                <div class="input-group">
+                    <input type="text" name="searchString" class="form-control" placeholder="Search by name..." />
+                    <button type="submit" class="btn btn-outline-secondary">Search</button>
+                </div>
+            </div>
+        </form>
+    </div>
+    <div class="card-body">
+        <table class="table table-striped" id="departmentsTable">
+            <thead>
+                <tr>
+                    <th>
+                        @Html.DisplayNameFor(model => model.Name)
+                    </th>
+                    <th>
+                        Employee Count
+                    </th>
+                    <th>
+                        Total Salary
+                    </th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td>
+                            @Html.DisplayFor(modelItem => item.Name)
+                        </td>
+                        <td>
+                            @Html.DisplayFor(modelItem => item.EmployeeCount)
+                        </td>
+                        <td>
+                            @Html.DisplayFor(modelItem => item.TotalSalary)
+                        </td>
+                        <td>
+                            <a href="javascript:;" class="btn btn-sm btn-outline-primary btn-edit" data-id="@item.Id">Edit</a>
+                            <a href="javascript:;" class="btn btn-sm btn-outline-danger btn-delete" data-id="@item.Id">Delete</a>
+
+                            @* <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary">Edit</a> *@
+                            @* <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-outline-danger">Delete</a> *@
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+
+@section Scripts {
+    <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            // Initialize DataTable only once
+            $('#departmentsTable').DataTable({
+                "paging": true,
+                "ordering": true,
+                "info": true,
+                "searching": false, // We're using our own search
+                "lengthChange": true,
+                "destroy": true // Allow reinitialization if needed
+            });
+
+            // Load Create Modal
+            $('body').on('click', '.btn-create', function () {
+                $.get('/Departments/CreateModal', function (html) {
+                    $('#modal-placeholder').html(html);
+                    $('#modal-placeholder .modal').modal('show');
+                });
+            });
+
+            // Submit Create
+            $('body').on('submit', '#createForm', function (e) {
+                e.preventDefault();
+                $.post('/Departments/CreateModal', $(this).serialize(), function (response) {
+                    if (response.success) {
+                        location.reload(); // Or refresh table content with AJAX
+                    } else {
+                        $('#modal-placeholder').html(response);
+                    }
+                });
+            });
+
+            // Load Edit Modal
+            $('body').on('click', '.btn-edit', function () {
+                const id = $(this).data('id');
+                $.get(`/Departments/EditModal/${id}`, function (html) {
+                    $('#modal-placeholder').html(html);
+                    $('#modal-placeholder .modal').modal('show');
+                });
+            });
+
+            // Submit Edit
+            $('body').on('submit', '#editForm', function (e) {
+                e.preventDefault();
+                $.post('/Departments/EditModal', $(this).serialize(), function (response) {
+                    if (response.success) {
+                        location.reload();
+                    } else {
+                        $('#modal-placeholder').html(response);
+                    }
+                });
+            });
+
+            // Load Delete Modal
+            $('body').on('click', '.btn-delete', function () {
+                const id = $(this).data('id');
+                $.get(`/Departments/DeleteModal/${id}`, function (html) {
+                    $('#modal-placeholder').html(html);
+                    $('#modal-placeholder .modal').modal('show');
+                });
+            });
+
+            // Submit Delete
+            $('body').on('submit', '#deleteForm', function (e) {
+                e.preventDefault();
+                $.post('/Departments/DeleteModal', $(this).serialize(), function (response) {
+                    if (response.success) {
+                        location.reload();
+                    } else {
+                        $('#modal-placeholder').html(response);
+                    }
+                });
+            });
+        });
+    </script>
+} 

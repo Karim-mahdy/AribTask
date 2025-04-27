@@ -1,0 +1,285 @@
+﻿@model IEnumerable<AribTask.Application.ViewModels.EmployeeTaskViewModel>
+
+@{
+    var isManager = ViewBag.IsManager;
+    ViewData["Title"] = isManager ? "Tasks I've Assigned" : "My Tasks";
+}
+
+<h1>@ViewData["Title"]</h1>
+
+@if (isManager)
+{
+    <div class="mb-3">
+        <button type="button" class="btn btn-primary" id="btn-create-task">
+            <i class="bi bi-plus-circle"></i> Create New Task
+        </button>
+    </div>
+}
+
+<div id="task-result" class="alert d-none"></div>
+
+<div class="card">
+    <div class="card-body">
+        @if (!Model.Any())
+        {
+            <div class="alert alert-info">
+                @if (isManager)
+                {
+                    <text>You haven't assigned any tasks yet.</text>
+                }
+                else
+                {
+                    <text>You don't have any tasks assigned to you.</text>
+                }
+            </div>
+        }
+        else
+        {
+            <table class="table table-striped" id="tasksTable">
+                <thead>
+                    <tr>
+                        <th>Title</th>
+                        <th>Description</th>
+                        <th>Due Date</th>
+                        <th>Status</th>
+                        @if (isManager)
+                        {
+                            <th>Assigned To</th>
+                        }
+                        else
+                        {
+                            <th>Assigned By</th>
+                        }
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model)
+                    {
+                        <tr>
+                            <td>@item.Title</td>
+                            <td>@item.Description</td>
+                            <td>@item.DueDate.ToString("yyyy-MM-dd")</td>
+                            <td><span class="badge @GetStatusBadgeClass(item.Status)">@item.Status</span></td>
+                            @if (isManager)
+                            {
+                                <td>@item.EmployeeName</td>
+                            }
+                            else
+                            {
+                                <td>@item.CreatedByName</td>
+                            }
+                            <td>
+                                @if (isManager)
+                                {
+                                    <button type="button" class="btn btn-sm btn-outline-primary assign-task" data-id="@item.Id">Reassign</button>
+                                    <button type="button" class="btn btn-sm btn-outline-info details-task" data-id="@item.Id">Details</button>
+                                }
+                                else
+                                {
+                                    <button type="button" class="btn btn-sm btn-outline-primary edit-task" data-id="@item.Id">Update</button>
+                                    <button type="button" class="btn btn-sm btn-outline-info details-task" data-id="@item.Id">Details</button>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+    </div>
+</div>
+
+<!-- Modal Container -->
+<div id="modal-container"></div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <script>
+        $(document).ready(function () {
+            $('#tasksTable').DataTable();
+            
+            // Create Task Button
+            $('#btn-create-task').on('click', function() {
+                $.get('/Tasks/CreateModal', function(data) {
+                    $('#modal-container').html(data);
+                    $('.modal').modal('show');
+                    
+                    // Handle form submission
+                    $('#createTaskForm').on('submit', handleCreateTask);
+                });
+            });
+            
+            // Edit Task Button (for status updates by employees)
+            $(document).on('click', '.edit-task', function() {
+                var taskId = $(this).data('id');
+                $.get('/Tasks/EditModal/' + taskId, function(data) {
+                    $('#modal-container').html(data);
+                    $('.modal').modal('show');
+                    
+                    // Handle form submission
+                    $('#editTaskForm').on('submit', handleEditTask);
+                });
+            });
+            
+            // Assign Task Button (for managers to reassign)
+            $(document).on('click', '.assign-task', function() {
+                var taskId = $(this).data('id');
+                $.get('/Tasks/AssignTaskModal/' + taskId, function(data) {
+                    $('#modal-container').html(data);
+                    $('.modal').modal('show');
+                    
+                    // Handle form submission
+                    $('#assignTaskForm').on('submit', handleAssignTask);
+                });
+            });
+            
+            // Details Task Button
+            $(document).on('click', '.details-task', function() {
+                var taskId = $(this).data('id');
+                $.get('/Tasks/DetailsModal/' + taskId, function(data) {
+                    $('#modal-container').html(data);
+                    $('.modal').modal('show');
+                });
+            });
+
+                   function handleCreateTask(e) {
+            e.preventDefault();
+            var form = $(this);
+            var data = form.serialize();
+
+            $.ajax({
+                type: 'POST',
+                url: '/Tasks/Create',
+                data: data,
+                headers: {
+                    "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val()
+                },
+                success: function(res) {
+                    if (res.success) {
+                        $('.modal').modal('hide');
+                        if (res.redirectUrl) {
+                            window.location.href = res.redirectUrl;
+                        } else {
+                            showAlert('success', res.message);
+                            setTimeout(function() { location.reload(); }, 1500);
+                        }
+                    } else {
+                        showAlert('danger', res.message);
+                    }
+                },
+                error: function(xhr) {
+                    showAlert('danger', "Server error: " + xhr.responseText);
+                }
+            });
+        }
+
+            
+            // Handle Edit Task Form Submit (status update)
+            function handleEditTask(e) {
+                e.preventDefault();
+                var form = $(this);
+                var data = form.serialize();
+                var taskId = form.find('input[name="Id"]').val();
+                
+                // Debug form data
+                console.log("Form data:", data);
+                
+                $.ajax({
+                    type: 'POST',
+                    url: '/Tasks/Edit/' + taskId,
+                    data: data,
+                    headers: {
+                        "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val()
+                    },
+                    success: function(res) {
+                        $('.modal').modal('hide');
+                        if (res.success) {
+                            showAlert('success', res.message);
+                            setTimeout(function() { location.reload(); }, 1500);
+                        } else {
+                            showAlert('danger', res.message);
+                            console.log("Server response:", res);
+                        }
+                    },
+                    error: function(xhr) {
+                        showAlert('danger', "Error updating task: " + xhr.responseText);
+                        console.error("AJAX error:", xhr);
+                    }
+                });
+            }
+            
+            // Handle Assign Task Form Submit
+            function handleAssignTask(e) {
+                e.preventDefault();
+                var form = $(this);
+                var data = form.serialize();
+                var taskId = form.find('input[name="Id"]').val();
+                
+                console.log("Assignment form data:", data);
+                
+                $.ajax({
+                    type: 'POST',
+                    url: '/Tasks/UpdateAssignment/' + taskId,
+                    data: data,
+                    headers: {
+                        "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val()
+                    },
+                    success: function(res) {
+                        $('.modal').modal('hide');
+                        if (res.success) {
+                            showAlert('success', res.message);
+                            setTimeout(function() { location.reload(); }, 1500);
+                        } else {
+                            showAlert('danger', res.message);
+                            console.log("Server response:", res);
+                        }
+                    },
+                    error: function(xhr) {
+                        showAlert('danger', "Error reassigning task: " + xhr.responseText);
+                        console.error("AJAX error:", xhr);
+                    }
+                });
+            }
+            
+            // Helper function to show alerts
+            function showAlert(type, message) {
+                const result = $('#task-result');
+                result.removeClass('d-none alert-success alert-danger')
+                      .addClass('alert alert-' + type)
+                      .html(message);
+                
+                // Auto-hide after 5 seconds
+                setTimeout(function() {
+                    result.addClass('d-none');
+                }, 5000);
+            }
+        });
+        
+        // Helper for badge styling
+        function GetStatusBadgeClass(status) {
+            switch(status) {
+                case 0: return "bg-primary"; // New
+                case 1: return "bg-info"; // InProgress
+                case 2: return "bg-success"; // Completed
+                case 3: return "bg-warning"; // Delayed
+                case 4: return "bg-secondary"; // Cancelled
+                default: return "bg-secondary";
+            }
+        }
+    </script>
+}
+
+@functions {
+    public string GetStatusBadgeClass(AribTask.Domain.Models.TaskStatus status)
+    {
+        return status switch
+        {
+            AribTask.Domain.Models.TaskStatus.New => "bg-primary",
+            AribTask.Domain.Models.TaskStatus.InProgress => "bg-info",
+            AribTask.Domain.Models.TaskStatus.Completed => "bg-success",
+            AribTask.Domain.Models.TaskStatus.Delayed => "bg-warning",
+            AribTask.Domain.Models.TaskStatus.Cancelled => "bg-secondary",
+            _ => "bg-secondary"
+        };
+    }
+}

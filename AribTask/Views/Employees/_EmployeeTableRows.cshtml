@@ -1,0 +1,27 @@
+﻿@model IEnumerable<AribTask.Application.ViewModels.EmployeeViewModel>
+
+@foreach (var item in Model)
+{
+    <tr>
+        <td>
+            @if (!string.IsNullOrEmpty(item.ImagePath))
+            {
+                <img src="@item.ImagePath" alt="@item.FullName" class="employee-image" style="max-width: 50px; max-height: 50px;" />
+            }
+            else
+            {
+                <img src="/images/default-user.png" alt="Default" class="employee-image" style="max-width: 50px; max-height: 50px;" />
+            }
+        </td>
+        <td>@item.FirstName</td>
+        <td>@item.LastName</td>
+        <td>@item.FullName</td>
+        <td>@item.Salary</td>
+        <td>@item.DepartmentName</td>
+        <td>@(string.IsNullOrEmpty(item.ManagerName) ? "-" : item.ManagerName)</td>
+        <td>
+            <a href="javascript:;" class="btn btn-sm btn-outline-primary btn-edit-employee" data-id="@item.Id">Edit</a>
+            <a href="javascript:;" class="btn btn-sm btn-outline-danger btn-delete-employee" data-id="@item.Id">Delete</a>
+        </td>
+    </tr>
+}

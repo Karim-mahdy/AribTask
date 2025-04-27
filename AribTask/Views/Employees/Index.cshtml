@@ -1,0 +1,233 @@
+﻿@model IEnumerable<AribTask.Application.ViewModels.EmployeeViewModel>
+
+@{
+    ViewData["Title"] = "Employees";
+}
+
+<h1>Employees</h1>
+
+<p>
+    <a href="javascript:;" class="btn btn-primary btn-create-employee">Create New</a>
+
+</p>
+<div id="modal-placeholder"></div>
+
+<div class="card">
+    <div class="card-header">
+        <form asp-action="Index" method="get" class="row g-3">
+            <div class="col-md-6">
+                <div class="input-group">
+                    <input type="text" name="searchString" class="form-control" placeholder="Search by name or department..." />
+                    <button type="submit" class="btn btn-outline-secondary">Search</button>
+                </div>
+            </div>
+        </form>
+    </div>
+    <div class="card-body">
+        <table class="table table-striped" id="employeesTable">
+            <thead>
+                <tr>
+                    <th>Image</th>
+                    <th>First Name</th>
+                    <th>Last Name</th>
+                    <th>Full Name</th>
+                    <th>Salary</th>
+                    <th>Department</th>
+                    <th>Manager</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td>
+                            @if (!string.IsNullOrEmpty(item.ImagePath))
+                            {
+                                <img src="@item.ImagePath" alt="@item.FullName" class="employee-image" style="max-width: 50px; max-height: 50px;" />
+                            }
+                            else
+                            {
+                                <img src="/images/default-user.png" alt="Default" class="employee-image" style="max-width: 50px; max-height: 50px;" />
+                            }
+                        </td>
+                        <td>@Html.DisplayFor(modelItem => item.FirstName)</td>
+                        <td>@Html.DisplayFor(modelItem => item.LastName)</td>
+                        <td>@Html.DisplayFor(modelItem => item.FullName)</td>
+                        <td>@Html.DisplayFor(modelItem => item.Salary)</td>
+                        <td>@item.DepartmentName</td>
+                        <td>@(string.IsNullOrEmpty(item.ManagerName) ? "-" : item.ManagerName)</td>
+                        <td>
+                          @*   <a href="javascript:;" class="btn btn-sm btn-outline-primary btn-edit-employee" data-id="@item.Id">Edit</a>
+                            <a href="javascript:;" class="btn btn-sm btn-outline-danger btn-delete-employee" data-id="@item.Id">Delete</a>
+ *@
+                            <a href="javascript:;" class="btn btn-sm btn-outline-primary btn-edit-employee" data-id="@item.Id">Edit</a>
+                            <a href="javascript:;" class="btn btn-sm btn-outline-danger btn-delete-employee" data-id="@item.Id">Delete</a>
+
+                            @* <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary">Edit</a> *@
+                            @* <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-outline-danger">Delete</a> *@
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            // Initialize DataTable only once
+            let employeeTable;
+            
+            // Check if table is already initialized
+            if (!$.fn.DataTable.isDataTable('#employeesTable')) {
+                employeeTable = $('#employeesTable').DataTable({
+                    paging: true,
+                    ordering: true,
+                    info: true,
+                    searching: false,
+                    lengthChange: true,
+                    destroy: true // Allow reinitialization if needed
+                });
+            } else {
+                employeeTable = $('#employeesTable').DataTable();
+            }
+
+        
+            $('body').on('click', '.btn-create-employee', function () {
+                $.get('/Employees/CreateModal')
+                    .done(function (html) {
+                        $('#modal-placeholder').html(html);
+                        $('#modal-placeholder .modal').modal('show');
+                    })
+                    .fail(function (xhr) {
+                        console.error("Failed to load create modal:", xhr.responseText);
+                    });
+            });
+
+            // Submit Create Form via AJAX
+            $('body').on('submit', '#createEmployeeForm', function (e) {
+                e.preventDefault();
+                var formData = new FormData(this);
+                formData.append("__RequestVerificationToken", $('input[name="__RequestVerificationToken"]').val());
+
+                $.ajax({
+                    type: 'POST',
+                    url: '/Employees/CreateModal',
+                    data: formData,
+                    contentType: false,
+                    processData: false,
+                    success: function (response) {
+                        if (response.success) {
+                            $('.modal').modal('hide');
+                            $('.modal-backdrop').remove();
+
+                            const e = response.employee;
+                            const image = e.imagePath
+                                ? `<img src="${e.imagePath}" alt="${e.fullName}" class="employee-image" style="max-width: 50px; max-height: 50px;" />`
+                                : `<img src="/images/default-user.png" alt="Default" class="employee-image" style="max-width: 50px; max-height: 50px;" />`;
+
+                            employeeTable.row.add([
+                                image,
+                                e.firstName,
+                                e.lastName,
+                                e.fullName,
+                                e.salary,
+                                e.departmentName,
+                                e.managerName,
+                                `<a href="javascript:;" class="btn btn-sm btn-outline-primary btn-edit-employee" data-id="${e.id}">Edit</a>
+                                 <a href="javascript:;" class="btn btn-sm btn-outline-danger btn-delete-employee" data-id="${e.id}">Delete</a>`
+                            ]).draw(false);
+                        } else {
+                            $('#modal-placeholder').html(response);
+                            $('#modal-placeholder .modal').modal('show');
+                        }
+                    },
+                    error: function (xhr) {
+                        console.error("Create error:", xhr.responseText);
+                    }
+                });
+            });
+
+            // ============================
+            // Load Edit Modal
+            // ============================
+                  $('body').on('click', '.btn-edit-employee', function () {
+            const id = $(this).data('id');
+            $.get(`/Employees/EditModal/${id}`, function (html) {
+                $('#modal-placeholder').html(html);
+                $('#modal-placeholder .modal').modal('show');
+            });
+        });
+
+        $('body').on('submit', '#editEmployeeForm', function (e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+
+            $.ajax({
+                type: 'POST',
+                url: '/Employees/EditModal',
+                data: formData,
+                contentType: false,
+                processData: false,
+                success: function (response) {
+                    if (response.success) {
+                        $('.modal').modal('hide');
+                        $('.modal-backdrop').remove();
+
+                        const e = response.employee;
+                        const row = $(`.btn-edit-employee[data-id='${e.id}']`).closest('tr');
+                        const image = e.imagePath
+                            ? `<img src="${e.imagePath}" class="employee-image" style="max-width:50px; max-height:50px;" />`
+                            : `<img src="/images/default-user.png" class="employee-image" style="max-width:50px; max-height:50px;" />`;
+
+                        // Update row in DataTable
+                        employeeTable.row(row).data([
+                            image,
+                            e.firstName,
+                            e.lastName,
+                            e.fullName,
+                            e.salary,
+                            e.departmentName,
+                            e.managerName,
+                            `<a href="javascript:;" class="btn btn-sm btn-outline-primary btn-edit-employee" data-id="${e.id}">Edit</a>
+                             <a href="javascript:;" class="btn btn-sm btn-outline-danger btn-delete-employee" data-id="${e.id}">Delete</a>`
+                        ]).draw(false);
+                    } else {
+                        $('#modal-placeholder').html(response);
+                    }
+                }
+            });
+        });
+
+        // ========= Delete =========
+        $('body').on('click', '.btn-delete-employee', function () {
+            const id = $(this).data('id');
+            $.get(`/Employees/DeleteModal/${id}`, function (html) {
+                $('#modal-placeholder').html(html);
+                $('#modal-placeholder .modal').modal('show');
+            });
+        });
+
+        $('body').on('submit', '#deleteEmployeeForm', function (e) {
+            e.preventDefault();
+            const row = $(`.btn-delete-employee[data-id='${$('#Id').val()}']`).closest('tr');
+
+            $.post('/Employees/DeleteModal', $(this).serialize(), function (response) {
+                if (response.success) {
+                    $('.modal').modal('hide');
+                    $('.modal-backdrop').remove();
+
+                    employeeTable.row(row).remove().draw(false);
+                } else {
+                    $('#modal-placeholder').html(response);
+                }
+            });
+        });
+         });
+    </script>
+
+  
+   
+} 

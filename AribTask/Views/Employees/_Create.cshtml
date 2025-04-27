@@ -1,0 +1,52 @@
+﻿@model AribTask.Application.ViewModels.EmployeeViewModel
+
+<div class="modal fade" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <form id="createEmployeeForm" enctype="multipart/form-data">
+                @Html.AntiForgeryToken()
+                <div class="modal-header">
+                    <h5 class="modal-title">Create Employee</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body row g-3">
+                    <div class="col-md-6">
+                        <label asp-for="FirstName"></label>
+                        <input asp-for="FirstName" class="form-control" />
+                        <span asp-validation-for="FirstName" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="LastName"></label>
+                        <input asp-for="LastName" class="form-control" />
+                        <span asp-validation-for="LastName" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="Salary"></label>
+                        <input asp-for="Salary" class="form-control" />
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="DepartmentId">Department</label>
+                        <select asp-for="DepartmentId" class="form-select" asp-items="ViewBag.Departments"></select>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="ManagerId">Manager</label>
+                        <select asp-for="ManagerId" class="form-select" asp-items="ViewBag.Managers">
+                            <option value="">-- None --</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="ImageFile">Image</label>
+                        <input asp-for="ImageFile" type="file" class="form-control" />
+                    </div>
+                    <div class="col-md-6">
+                        <label for="Email">Email</label>
+                        <input name="Email" class="form-control" required />
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

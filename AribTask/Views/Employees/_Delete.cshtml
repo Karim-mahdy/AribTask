@@ -1,0 +1,22 @@
+﻿@model AribTask.Application.ViewModels.EmployeeViewModel
+
+<div class="modal fade" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="deleteEmployeeForm">
+                <input type="hidden" asp-for="Id" />
+                <div class="modal-header">
+                    <h5 class="modal-title text-danger">Confirm Delete</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Are you sure you want to delete <strong>@Model.FullName</strong>?</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-danger">Delete</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
